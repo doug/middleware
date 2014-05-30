@@ -38,7 +38,7 @@ func (m *middleware) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	next := (*middleware)(e.Next())
 	h := e.Value.(Middleware)
 	if next == nil {
-		h.ServeHTTP(rw, r, voidMiddleware)
+		h.ServeHTTP(rw, r, voidHandler)
 		return
 	}
 	h.ServeHTTP(rw, r, next.ServeHTTP)
@@ -61,20 +61,6 @@ func (s *Stack) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// // Get the list element by searching for equality in the underlying element.Value.
-// // Note: This function uses the reflect library.
-// func (s *Stack) Get(handler Middleware) *list.Element {
-// 	var item1, item2 reflect.Value
-// 	item1 = reflect.ValueOf(handler)
-// 	for e := s.Front(); e != nil; e = e.Next() {
-// 		item2 = reflect.ValueOf(e.Value)
-// 		if item1 == item2 {
-// 			return e
-// 		}
-// 	}
-// 	return nil
-// }
-
 // Use adds a Middleware onto the middleware stack. Middlewares are invoked in the order they are added unless otherwise specified.
 func (s *Stack) Use(handler Middleware) *list.Element {
 	return s.PushBack(handler)
@@ -85,6 +71,6 @@ func (s *Stack) UseHandler(handler http.Handler) *list.Element {
 	return s.Use(Wrap(handler))
 }
 
-func voidMiddleware(rw http.ResponseWriter, r *http.Request) {
+func voidHandler(rw http.ResponseWriter, r *http.Request) {
 	// do nothing
 }

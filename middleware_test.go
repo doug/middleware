@@ -3,15 +3,15 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 )
 
-/* Test Helpers */
-func expect(t *testing.T, a interface{}, b interface{}) {
-	if a != b {
-		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
+func stringwrap(base *string, pre, post string) Middleware {
+	return MiddlewareFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		*base += pre
+		next(rw, r)
+		*base += post
+	})
 }
 
 func TestMiddlewareServeHTTP(t *testing.T) {
@@ -19,23 +19,22 @@ func TestMiddlewareServeHTTP(t *testing.T) {
 	response := httptest.NewRecorder()
 
 	s := NewStack()
-	s.Use(MiddlewareFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		result += "foo"
-		next(rw, r)
-		result += "ban"
-	}))
-	s.Use(MiddlewareFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		result += "bar"
-		next(rw, r)
-		result += "baz"
-	}))
-	s.Use(MiddlewareFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		result += "bat"
-		rw.WriteHeader(http.StatusBadRequest)
-	}))
+	s.Use(stringwrap(&result, "a", "g"))
+	mark := s.Use(stringwrap(&result, "b", "f"))
+	s.Use(stringwrap(&result, "d", ""))
+
+	// Insert at point
+	s.InsertAfter(stringwrap(&result, "c", "e"), mark)
+
+	// Append a whole stack
+	s2 := NewStack()
+	s2.Use(stringwrap(&result, "alpha_", "_omega"))
+	s.PushFrontList(s2.List)
 
 	s.ServeHTTP(response, (*http.Request)(nil))
 
-	expect(t, result, "foobarbatbazban")
-	expect(t, response.Code, http.StatusBadRequest)
+	expected := "alpha_abcdefg_omega"
+	if result != expected {
+		t.Errorf("Invalid result, expected %s got %s\n", expected, result)
+	}
 }
