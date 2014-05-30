@@ -4,7 +4,7 @@ This is as bare bones as possible, a reimagining of the middleware interface com
 
 I feel strongly that any middleware should have an interface only using the net/http standard. The reason I chose `func(rw http.ResponseWriter, r *http.Response, next http.HandlerFunc)` over the other most common approach of just `func(http.Handler) http.Handler` is because with a linked list you can make partial stacks and compose them with other ones, so someone can precombine a set of middleware to import and use as a unit. Additionally, the code produces by calling `next(rw,r)` is simpler than a returned closure function that the other approach generally uses. 
 
-As far as needing some sort of context for exchanging information between middleware layers. I leave that like the choice of mux undecided, there are plenty out there, or you could just append some information to the request header. Personally, I use gorilla for both. http://www.gorillatoolkit.org/pkg/mux and http://www.gorillatoolkit.org/pkg/context.
+As far as needing some sort of context for exchanging information between middleware layers; I leave that, like the choice of mux, undecided. There are plenty of options out there, or you could just append some information to the request header. Personally, I use gorilla for both. http://www.gorillatoolkit.org/pkg/mux and http://www.gorillatoolkit.org/pkg/context.
 
 ## Example Use
 
