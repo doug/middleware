@@ -1,8 +1,9 @@
-package http
+package middleware
 
 import (
 	"container/list"
-	. "net/http"
+	"net/http"
+	"reflect"
 )
 
 // Middleware handler is an interface that objects can implement to be registered to serve as middleware
@@ -10,22 +11,22 @@ import (
 // ServeHTTP should yield to the next middleware in the chain by invoking the next MiddlewareFunc.
 // passed in.
 type Middleware interface {
-	ServeHTTP(rw ResponseWriter, r *Request, next HandlerFunc)
+	ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 }
 
 // MiddlewareFunc is an adapter to allow the use of ordinary functions as middleware handlers.
 // If f is a function with the appropriate signature, MiddlewareFunc(f) is a Middleware object that calls f.
-type MiddlewareFunc func(rw ResponseWriter, r *Request, next HandlerFunc)
+type MiddlewareFunc func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 
-func (h MiddlewareFunc) ServeHTTP(rw ResponseWriter, r *Request, next HandlerFunc) {
+func (h MiddlewareFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	h(rw, r, next)
 }
 
 // Wrap converts a Handler into a Middleware so it can be used as a
 // middleware. The next HandlerFunc is automatically called after the Middleware
 // is executed.
-func Wrap(handler Handler) Middleware {
-	return MiddlewareFunc(func(rw ResponseWriter, r *Request, next HandlerFunc) {
+func Wrap(handler http.Handler) Middleware {
+	return MiddlewareFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		handler.ServeHTTP(rw, r)
 		next(rw, r)
 	})
@@ -33,7 +34,7 @@ func Wrap(handler Handler) Middleware {
 
 type middleware list.Element
 
-func (m *middleware) ServeHTTP(rw ResponseWriter, r *Request) {
+func (m *middleware) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	e := (*list.Element)(m)
 	next := (*middleware)(e.Next())
 	h := e.Value.(Middleware)
@@ -54,23 +55,37 @@ func NewStack() *stack {
 	return &stack{list.New()}
 }
 
-func (s *stack) ServeHTTP(rw ResponseWriter, r *Request) {
+func (s *stack) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	front := (*middleware)(s.Front())
 	if front != nil {
 		front.ServeHTTP(rw, r)
 	}
 }
 
+// Get the list element by searching for equality in the underlying element.Value.
+// Note: This function uses the reflect library.
+func (s *stack) Get(handler interface{}) *list.Element {
+	var item1, item2 reflect.Value
+	item1 = reflect.ValueOf(handler)
+	for e := s.Front(); e != nil; e = e.Next() {
+		item2 = reflect.ValueOf(e.Value)
+		if item1 == item2 {
+			return e
+		}
+	}
+	return nil
+}
+
 // Use adds a Middleware onto the middleware stack. Middlewares are invoked in the order they are added unless otherwise specified.
-func (s *stack) Use(handler Middleware) {
-	s.PushBack(handler)
+func (s *stack) Use(handler Middleware) *list.Element {
+	return s.PushBack(handler)
 }
 
 // UseHandler adds a Handler onto the middleware stack. Handlers are invoked in the order they are added unless otherwise specified.
-func (s *stack) UseHandler(handler Handler) {
-	s.Use(Wrap(handler))
+func (s *stack) UseHandler(handler http.Handler) *list.Element {
+	return s.Use(Wrap(handler))
 }
 
-func voidMiddleware(rw ResponseWriter, r *Request) {
+func voidMiddleware(rw http.ResponseWriter, r *http.Request) {
 	// do nothing
 }
