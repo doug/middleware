@@ -46,16 +46,16 @@ func (m *middleware) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 // Stack is a linked list stack of middleware
-type stack struct {
+type Stack struct {
 	*list.List
 }
 
-// New returns a new linked list stack of middlware
-func NewStack() *stack {
-	return &stack{list.New()}
+// NewStack returns a new linked list Stack of middlware
+func NewStack() *Stack {
+	return &Stack{list.New()}
 }
 
-func (s *stack) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (s *Stack) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	front := (*middleware)(s.Front())
 	if front != nil {
 		front.ServeHTTP(rw, r)
@@ -64,7 +64,7 @@ func (s *stack) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 // Get the list element by searching for equality in the underlying element.Value.
 // Note: This function uses the reflect library.
-func (s *stack) Get(handler Middleware) *list.Element {
+func (s *Stack) Get(handler Middleware) *list.Element {
 	var item1, item2 reflect.Value
 	item1 = reflect.ValueOf(handler)
 	for e := s.Front(); e != nil; e = e.Next() {
@@ -77,12 +77,12 @@ func (s *stack) Get(handler Middleware) *list.Element {
 }
 
 // Use adds a Middleware onto the middleware stack. Middlewares are invoked in the order they are added unless otherwise specified.
-func (s *stack) Use(handler Middleware) *list.Element {
+func (s *Stack) Use(handler Middleware) *list.Element {
 	return s.PushBack(handler)
 }
 
 // UseHandler adds a Handler onto the middleware stack. Handlers are invoked in the order they are added unless otherwise specified.
-func (s *stack) UseHandler(handler http.Handler) *list.Element {
+func (s *Stack) UseHandler(handler http.Handler) *list.Element {
 	return s.Use(Wrap(handler))
 }
 
