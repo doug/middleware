@@ -22,12 +22,12 @@ s.InsertAfter(Middleware3, element2)
 s.InsertAfter(Middleware5, s.Get(Middleware4))
 ~~~~
 
-Other middleware
-https://github.com/stephens2424/muxchain
-https://github.com/go-martini/martini
-https://github.com/codegangsta/negroni
-https://github.com/justinas/alice
+### Other middleware
+  - https://github.com/stephens2424/muxchain
+  - https://github.com/go-martini/martini
+  - https://github.com/codegangsta/negroni
+  - https://github.com/justinas/alice
 
-web frameworks with middleware
-https://github.com/yosssi/galaxy
-goji.io
+### web frameworks with middleware
+  - https://github.com/yosssi/galaxy
+  - http://goji.io
