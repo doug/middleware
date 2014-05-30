@@ -64,7 +64,7 @@ func (s *stack) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 // Get the list element by searching for equality in the underlying element.Value.
 // Note: This function uses the reflect library.
-func (s *stack) Get(handler interface{}) *list.Element {
+func (s *stack) Get(handler Middleware) *list.Element {
 	var item1, item2 reflect.Value
 	item1 = reflect.ValueOf(handler)
 	for e := s.Front(); e != nil; e = e.Next() {
