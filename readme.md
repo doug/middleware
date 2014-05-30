@@ -6,7 +6,7 @@ This is as bare bones as possible, a reimagining of the middleware interface com
 
 ~~~ go
 
-// Similar to negroni in the interface 
+// Similar to negroni in the interface
 // func(rw http.ResponseWriter, r *http.Response, next http.HandleFunc)
 router := mux.NewRouter()
 router.HandleFunc("/", SomeHandler)
@@ -19,7 +19,6 @@ s.UseHandler(router)
 
 // You can modify the stack because it is a container/list
 s.InsertAfter(Middleware3, element2)
-s.InsertAfter(Middleware5, s.Get(Middleware4))
 ~~~~
 
 ### Other middleware
