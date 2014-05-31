@@ -1,17 +1,12 @@
 # Middleware
 
-This is as bare bones as possible, a reimagining of the middleware interface compatible with negroni built on top of the standard library container/list. It is written with the intention of integration with the net/http standard library, so names etc are such that they do not conflict. I would hope that some day in the future it or something like it could be added to the standard library and people can come to some agreement on the interface to write middleware. I would rather have a standard than multiple solutions even if there are benefits to the differing implementations.
-
-I feel strongly that any middleware should have an interface only using the net/http standard. The reason I chose `func(rw http.ResponseWriter, r *http.Response, next http.HandlerFunc)` over the other most common approach of just `func(http.Handler) http.Handler` is because with a linked list you can make partial stacks and compose them with other ones, so someone can precombine a set of middleware to import and use as a unit. Additionally, the code written by calling `next(rw,r)` tends to read easier than a returned closure function that the other approach uses. 
-
-As far as needing some sort of context for exchanging information between middleware layers; I leave that, like the choice of mux, undecided. There are plenty of options out there, or you could just append some information to the request header. Personally, I use gorilla for both. http://www.gorillatoolkit.org/pkg/mux and http://www.gorillatoolkit.org/pkg/context.
+Simple middleware on top of container/list. Middleware interface is
+`func(rw http.ResponseWriter, r *http.Response, next http.Handler)`.
 
 ## Example Use
 
 ~~~ go
 
-// The middleware interface is compatible with negroni
-// func(rw http.ResponseWriter, r *http.Response, next http.HandlerFunc)
 router := mux.NewRouter()
 router.HandleFunc("/", SomeHandler)
 
@@ -31,22 +26,13 @@ s2.Use(MiddlewareB)
 // Add this middleware stack to the front of the other one.
 s.PushFrontList(s2.List)
 
+// Compose converts a Middleware into a func(http.Handler)http.Handler
+// so it can be called with Alice or just composing(functions(like(this))).
+m1 := middleware.Compose(MiddelwareA)
+m2 := middleware.Compose(MiddelwareB)
+m3 := middleware.Compose(MiddelwareC)
+
+// Stack 3
+s3 := m1(m2(m3(http.DefaultServeMux)))
+
 ~~~~
-
-### Blogs about Go middleware
-  - http://stephensearles.com/?p=254
-  - http://codegangsta.io/blog/2014/05/19/my-thoughts-on-martini/
-  - http://justinas.org/writing-http-middleware-in-go/
-  - http://justinas.org/alice-painless-middleware-chaining-for-go/
-  - http://www.reddit.com/r/golang/comments/252wjh/are_you_using_golang_for_webapi_development_what/
-
-### Other middleware
-  - https://github.com/gorilla/handlers
-  - https://github.com/stephens2424/muxchain
-  - https://github.com/go-martini/martini
-  - https://github.com/codegangsta/negroni
-  - https://github.com/justinas/alice
-
-### Web frameworks with middleware
-  - https://github.com/yosssi/galaxy
-  - http://goji.io

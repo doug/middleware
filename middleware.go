@@ -10,14 +10,14 @@ import (
 // ServeHTTP should yield to the next middleware in the chain by invoking the next MiddlewareFunc.
 // passed in.
 type Middleware interface {
-	ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
+	ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Handler)
 }
 
 // MiddlewareFunc is an adapter to allow the use of ordinary functions as middleware handlers.
 // If f is a function with the appropriate signature, MiddlewareFunc(f) is a Middleware object that calls f.
-type MiddlewareFunc func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
+type MiddlewareFunc func(rw http.ResponseWriter, r *http.Request, next http.Handler)
 
-func (h MiddlewareFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (h MiddlewareFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Handler) {
 	h(rw, r, next)
 }
 
@@ -25,10 +25,20 @@ func (h MiddlewareFunc) ServeHTTP(rw http.ResponseWriter, r *http.Request, next 
 // middleware. The next HandlerFunc is automatically called after the Middleware
 // is executed.
 func Wrap(handler http.Handler) Middleware {
-	return MiddlewareFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	return MiddlewareFunc(func(rw http.ResponseWriter, r *http.Request, next http.Handler) {
 		handler.ServeHTTP(rw, r)
-		next(rw, r)
+		next.ServeHTTP(rw, r)
 	})
+}
+
+// Compose converts a Middleware into a func(http.Handler)http.Handler
+// so it can be called with Alice or just composing(functions(like(this))).
+func Compose(m Middleware) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			m.ServeHTTP(rw, r, next)
+		})
+	}
 }
 
 type middleware list.Element
@@ -41,7 +51,7 @@ func (m *middleware) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(rw, r, voidHandler)
 		return
 	}
-	h.ServeHTTP(rw, r, next.ServeHTTP)
+	h.ServeHTTP(rw, r, next)
 }
 
 // Stack is a linked list stack of middleware
@@ -71,6 +81,4 @@ func (s *Stack) UseHandler(handler http.Handler) *list.Element {
 	return s.Use(Wrap(handler))
 }
 
-func voidHandler(rw http.ResponseWriter, r *http.Request) {
-	// do nothing
-}
+var voidHandler = http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {})
