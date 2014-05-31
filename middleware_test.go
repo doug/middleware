@@ -7,9 +7,9 @@ import (
 )
 
 func stringwrap(base *string, pre, post string) Middleware {
-	return MiddlewareFunc(func(rw http.ResponseWriter, r *http.Request, next http.Handler) {
+	return MiddlewareFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		*base += pre
-		next.ServeHTTP(rw, r)
+		next(rw, r)
 		*base += post
 	})
 }

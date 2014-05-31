@@ -1,7 +1,7 @@
 # Middleware
 
 Simple middleware on top of container/list. Middleware interface is
-`func(rw http.ResponseWriter, r *http.Response, next http.Handler)`.
+`func(rw http.ResponseWriter, r *http.Response, next http.HandlerFunc)`.
 
 ## Example Use
 
@@ -26,7 +26,7 @@ s2.Use(MiddlewareB)
 // Add this middleware stack to the front of the other one.
 s.PushFrontList(s2.List)
 
-// Compose converts a Middleware into a func(http.Handler)http.Handler
+// Compose converts a Middleware into a func(http.HandlerFunc)http.HandlerFunc
 // so it can be called with Alice or just composing(functions(like(this))).
 m1 := middleware.Compose(MiddlewareA)
 m2 := middleware.Compose(MiddlewareB)
