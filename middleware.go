@@ -31,7 +31,7 @@ func Wrap(handler http.HandlerFunc) Middleware {
 	})
 }
 
-// Compose converts a Middleware into a func(http.HandlerFunc)http.HandlerFunc
+// Compose converts a Middleware into a func(http.Handler)http.Handler
 // so it can be called with Alice or just composing(functions(like(this))).
 func Compose(m Middleware) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
