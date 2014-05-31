@@ -28,9 +28,9 @@ s.PushFrontList(s2.List)
 
 // Compose converts a Middleware into a func(http.Handler)http.Handler
 // so it can be called with Alice or just composing(functions(like(this))).
-m1 := middleware.Compose(MiddelwareA)
-m2 := middleware.Compose(MiddelwareB)
-m3 := middleware.Compose(MiddelwareC)
+m1 := middleware.Compose(MiddlewareA)
+m2 := middleware.Compose(MiddlewareB)
+m3 := middleware.Compose(MiddlewareC)
 
 // Stack 3
 s3 := m1(m2(m3(http.DefaultServeMux)))
